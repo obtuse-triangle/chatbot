@@ -7,18 +7,18 @@ const { getBuildLogsMock, getMetricsMock } = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("../../../lib/env", () => ({
+vi.mock("../../../src/lib/env", () => ({
   env: {
     JENKINS_JOB: "trustops/build",
   },
 }));
 
-vi.mock("../../../lib/jenkins", () => ({
+vi.mock("../../../src/lib/jenkins", () => ({
   getBuildLogs: getBuildLogsMock,
 }));
 
-vi.mock("../../../lib/metrics", async () => {
-  const actual = await vi.importActual<typeof import("../../../lib/metrics")>("../../../lib/metrics");
+vi.mock("../../../src/lib/metrics", async () => {
+  const actual = await vi.importActual<typeof import("../../../src/lib/metrics")>("../../../src/lib/metrics");
 
   return {
     ...actual,

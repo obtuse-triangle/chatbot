@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { parsePromptConfig, serializePromptConfig } from "../../../../lib/config";
-import { commitFile, getFile } from "../../../../lib/github";
+import { parsePromptConfig, serializePromptConfig } from "../../../../src/lib/config";
+import { commitFile, getFile } from "../../../../src/lib/github";
 
 const commitRouteSchema = z.object({
   branch: z.string().min(1),

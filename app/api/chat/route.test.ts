@@ -4,7 +4,7 @@ const { streamChatMock } = vi.hoisted(() => ({
   streamChatMock: vi.fn(),
 }));
 
-vi.mock("../../../lib/llm", () => ({
+vi.mock("../../../src/lib/llm", () => ({
   streamChat: streamChatMock,
 }));
 

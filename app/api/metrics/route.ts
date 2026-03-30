@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { env } from "../../../lib/env";
-import { getBuildLogs } from "../../../lib/jenkins";
-import { getMetrics, parseEvaluatorLogs } from "../../../lib/metrics";
+import { env } from "../../../src/lib/env";
+import { getBuildLogs } from "../../../src/lib/jenkins";
+import { getMetrics, parseEvaluatorLogs } from "../../../src/lib/metrics";
 
 function parsePositiveInteger(value: string | null): number | null {
   if (!value) {

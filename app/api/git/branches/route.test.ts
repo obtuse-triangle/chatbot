@@ -4,7 +4,7 @@ const { listBranchesMock } = vi.hoisted(() => ({
   listBranchesMock: vi.fn(),
 }))
 
-vi.mock("../../../../lib/github", () => ({
+vi.mock("../../../../src/lib/github", () => ({
   listBranches: listBranchesMock,
 }))
 

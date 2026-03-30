@@ -5,12 +5,12 @@ const githubMocks = vi.hoisted(() => ({
   commitFileMock: vi.fn(),
 }));
 
-vi.mock("../../../../lib/github", () => ({
+vi.mock("../../../../src/lib/github", () => ({
   getFile: githubMocks.getFileMock,
   commitFile: githubMocks.commitFileMock,
 }));
 
-import { parsePromptConfig, serializePromptConfig } from "../../../../lib/config";
+import { parsePromptConfig, serializePromptConfig } from "../../../../src/lib/config";
 import { POST } from "./route";
 
 describe("POST /api/git/commit", () => {

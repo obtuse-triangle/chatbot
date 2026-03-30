@@ -5,11 +5,11 @@ const mocks = vi.hoisted(() => ({
   envMock: { JENKINS_JOB: "default-job" },
 }));
 
-vi.mock("../../../../lib/jenkins", () => ({
+vi.mock("../../../../src/lib/jenkins", () => ({
   triggerBuild: mocks.triggerBuildMock,
 }));
 
-vi.mock("../../../../lib/env", () => ({
+vi.mock("../../../../src/lib/env", () => ({
   env: mocks.envMock,
 }));
 

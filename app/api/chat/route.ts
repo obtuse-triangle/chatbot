@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { streamChat } from "../../../lib/llm";
-import { chatMessageSchema } from "../../../schemas";
+import { streamChat } from "../../../src/lib/llm";
+import { chatMessageSchema } from "../../../src/schemas";
 
 const chatRouteSchema = z.object({
   messages: z.array(chatMessageSchema).min(1),

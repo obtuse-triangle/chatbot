@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { env } from "../../../../lib/env";
-import { triggerBuild } from "../../../../lib/jenkins";
+import { env } from "../../../../src/lib/env";
+import { triggerBuild } from "../../../../src/lib/jenkins";
 
 const triggerSchema = z.object({
   branch: z.string().min(1),

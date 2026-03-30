@@ -5,13 +5,13 @@ const mocks = vi.hoisted(() => ({
   getBuildStatusMock: vi.fn(),
 }));
 
-vi.mock("../../../../lib/env", () => ({
+vi.mock("../../../../src/lib/env", () => ({
   env: {
     JENKINS_JOB: "trustops/build",
   },
 }));
 
-vi.mock("../../../../lib/jenkins", () => ({
+vi.mock("../../../../src/lib/jenkins", () => ({
   getBuildLogs: mocks.getBuildLogsMock,
   getBuildStatus: mocks.getBuildStatusMock,
 }));

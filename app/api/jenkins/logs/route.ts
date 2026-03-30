@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { env } from "../../../../lib/env";
-import { getBuildLogs, getBuildStatus } from "../../../../lib/jenkins";
+import { env } from "../../../../src/lib/env";
+import { getBuildLogs, getBuildStatus } from "../../../../src/lib/jenkins";
 
 function parsePositiveInteger(value: string | null): number | null {
   if (!value) {

@@ -5,7 +5,7 @@ const { listBranchesMock, listCommitsMock } = vi.hoisted(() => ({
   listCommitsMock: vi.fn(),
 }));
 
-vi.mock("../../../../lib/env", () => ({
+vi.mock("../../../../src/lib/env", () => ({
   env: {
     GITHUB_PAT: "ghp_test",
     GITHUB_OWNER: "trustops",
@@ -13,7 +13,7 @@ vi.mock("../../../../lib/env", () => ({
   },
 }));
 
-vi.mock("../../../../lib/github", () => ({
+vi.mock("../../../../src/lib/github", () => ({
   listBranches: listBranchesMock,
   listCommits: listCommitsMock,
 }));

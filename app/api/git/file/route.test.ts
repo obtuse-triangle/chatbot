@@ -4,7 +4,7 @@ const { getFileMock } = vi.hoisted(() => ({
   getFileMock: vi.fn(),
 }));
 
-vi.mock("../../../../lib/github", () => ({
+vi.mock("../../../../src/lib/github", () => ({
   getFile: getFileMock,
 }));
 
