@@ -49,6 +49,19 @@ async function fetchJson<T>(url: string): Promise<T> {
   return response.json() as Promise<T>
 }
 
+function extractVersion(message: string): string | null {
+  const match = message.match(/v\d+\.\d+\.\d+/)
+  return match ? match[0] : null
+}
+
+function truncateMessage(message: string, maxLength = 60): string {
+  const firstLine = message.split("\n")[0]
+  if (firstLine.length <= maxLength) {
+    return firstLine
+  }
+  return `${firstLine.slice(0, maxLength - 3)}...`
+}
+
 function formatDate(date: string): string {
   if (!date) {
     return ""
@@ -173,28 +186,32 @@ export function BranchSelector() {
         </div>
 
         <div data-testid="commit-list" className="space-y-2">
-          {commits.map((commit) => (
-            <div
-              key={commit.sha}
-              data-testid="commit-item"
-              className="rounded-2xl border border-border/60 bg-background/35 p-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">
-                    {commit.sha.slice(0, 7)} · {commit.message.split("\n")[0]}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {commit.author} · {formatDate(commit.date)}
-                  </p>
-                </div>
+          {commits.map((commit) => {
+            const version = extractVersion(commit.message)
+            const versionLabel = version ?? commit.sha.slice(0, 7)
+            return (
+              <div
+                key={commit.sha}
+                data-testid="commit-item"
+                className="rounded-2xl border border-border/60 bg-background/35 p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-base font-semibold">
+                      {versionLabel}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(commit.date)} · {truncateMessage(commit.message)}
+                    </p>
+                  </div>
 
-                <Button data-testid="load-button" size="sm" variant="secondary" onClick={() => handleLoadCommit(commit)}>
-                  Load
-                </Button>
+                  <Button data-testid="load-button" size="sm" variant="secondary" onClick={() => handleLoadCommit(commit)}>
+                    Load
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

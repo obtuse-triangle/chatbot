@@ -50,9 +50,9 @@ describe("POST /api/git/commit", () => {
 
     const payload = await response.json();
 
-    expect(githubMocks.getFileMock).toHaveBeenCalledWith("apps/trustops/prompt-config.yaml", "feature/test");
+    expect(githubMocks.getFileMock).toHaveBeenCalledWith("apps/trustops/prompt-config/configmap.yaml", "feature/test");
     expect(githubMocks.commitFileMock).toHaveBeenCalledWith(
-      "apps/trustops/prompt-config.yaml",
+      "apps/trustops/prompt-config/configmap.yaml",
       expect.any(String),
       "Update prompt config",
       "feature/test",
@@ -66,6 +66,7 @@ describe("POST /api/git/commit", () => {
       prompt_v1: "alpha",
       prompt_v2: "beta",
       canary_weight: 25,
+      prompt_version: "v1.0.0",
     });
     expect(response.status).toBe(201);
     expect(payload).toEqual({ sha: "commit-sha", branch: "feature/test" });
@@ -169,6 +170,7 @@ describe("POST /api/git/commit", () => {
       prompt_v1: "alpha",
       prompt_v2: "beta",
       canary_weight: 5,
+      prompt_version: "v1.0.0",
     });
   });
 });

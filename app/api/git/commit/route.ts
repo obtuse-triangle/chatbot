@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { parsePromptConfig, serializePromptConfig } from "../../../../src/lib/config";
 import { commitFile, getFile } from "../../../../src/lib/github";
+import { generateNextVersion } from "../../../../src/lib/version";
 
 const commitRouteSchema = z.object({
   branch: z.string().min(1),
@@ -17,7 +18,7 @@ const commitRouteSchema = z.object({
   message: z.string().min(1).optional(),
 });
 
-const configPath = "apps/trustops/prompt-config.yaml";
+const configPath = "apps/trustops/prompt-config/configmap.yaml";
 
 function getErrorStatus(error: unknown): number {
   if (typeof error === "object" && error !== null && "status" in error) {
@@ -32,35 +33,41 @@ function getErrorStatus(error: unknown): number {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const body = await request.json().catch(() => ({}));
+  const parsed = commitRouteSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body", issues: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { branch } = parsed.data;
+
   try {
-    const body = await request.json().catch(() => ({}));
-    const parsed = commitRouteSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request body", issues: parsed.error.flatten() }, { status: 400 });
-    }
-
-    const file = await getFile(configPath, parsed.data.branch);
+    const file = await getFile(configPath, branch);
     const currentConfig = parsePromptConfig(file.content);
+    const currentVersion = currentConfig.prompt_version;
+    const nextVersion = generateNextVersion(currentVersion);
     const updatedConfig = {
       ...currentConfig,
       system_prompt: parsed.data.prompt,
       temperature: parsed.data.params.temperature ?? currentConfig.temperature,
       top_p: parsed.data.params.top_p ?? currentConfig.top_p,
       top_k: parsed.data.params.top_k ?? currentConfig.top_k,
+      prompt_version: nextVersion,
     };
 
     const yaml = serializePromptConfig(updatedConfig);
-    const message = parsed.data.message ?? "feat(api): update prompt config";
+    const message = parsed.data.message ?? `feat: update prompt config to ${nextVersion}`;
 
-    const commit = await commitFile(configPath, yaml, message, parsed.data.branch, file.sha);
+    const commit = await commitFile(configPath, yaml, message, branch, file.sha);
 
-    return NextResponse.json({ sha: commit.commit.sha, branch: parsed.data.branch }, { status: 201 });
+    return NextResponse.json({ sha: commit.commit.sha, branch }, { status: 201 });
   } catch (error) {
     const status = getErrorStatus(error);
 
     if (status === 404) {
-      return NextResponse.json({ error: "Config not found" }, { status: 404 });
+      const message = error instanceof Error ? error.message : "Config not found";
+      return NextResponse.json({ error: `Failed to fetch config from GitHub: ${message}`, configPath, branch }, { status: 404 });
     }
 
     const message = error instanceof Error ? error.message : "Failed to commit config";

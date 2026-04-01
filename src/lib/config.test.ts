@@ -41,6 +41,7 @@ describe("config service", () => {
       prompt_v1: "prompt one",
       prompt_v2: "prompt two",
       canary_weight: 25,
+      prompt_version: "",
     };
 
     const serialized = serializePromptConfig(config);

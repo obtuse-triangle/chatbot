@@ -16,6 +16,7 @@ export const promptConfigSchema = z.object({
   prompt_v1: z.string().min(1),
   prompt_v2: z.string().min(1),
   canary_weight: z.coerce.number().int().min(0),
+  prompt_version: z.string().optional(),
 });
 
 export const chatMessageSchema = z.object({

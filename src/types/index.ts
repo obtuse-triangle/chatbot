@@ -6,6 +6,7 @@ export type PromptConfig = {
   prompt_v1: string;
   prompt_v2: string;
   canary_weight: number;
+  prompt_version?: string;
 };
 
 export type ChatMessage = {

@@ -40,7 +40,7 @@ describe("GET /api/git/commits", () => {
     const payload = await response.json();
 
     expect(listBranchesMock).toHaveBeenCalledTimes(1);
-    expect(listCommitsMock).toHaveBeenCalledWith("main-sha", 30);
+    expect(listCommitsMock).toHaveBeenCalledWith("main-sha", 30, "apps/trustops/prompt-config/configmap.yaml");
     expect(response.status).toBe(200);
     expect(payload).toEqual({
       commits: [

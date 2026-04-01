@@ -106,12 +106,13 @@ export async function listBranches(): Promise<GitHubBranch[]> {
   }));
 }
 
-export async function listCommits(branch: string, limit = 30): Promise<GitHubCommit[]> {
+export async function listCommits(branch: string, limit = 30, path?: string): Promise<GitHubCommit[]> {
   const { data } = await octokit.rest.repos.listCommits({
     owner,
     repo,
     sha: branch,
     per_page: limit,
+    ...(path ? { path } : {}),
   });
 
   return data.slice(0, limit).map((commit) => ({

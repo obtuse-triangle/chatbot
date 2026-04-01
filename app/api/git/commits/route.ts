@@ -6,6 +6,7 @@ import type { GitHubBranch } from "../../../../src/lib/github";
 
 const commitsRouteSchema = z.object({
   branch: z.string().min(1),
+  path: z.string().optional(),
 });
 
 export async function GET(request: Request): Promise<Response> {
@@ -13,6 +14,7 @@ export async function GET(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const parsed = commitsRouteSchema.safeParse({
       branch: url.searchParams.get("branch"),
+      path: url.searchParams.get("path") || "apps/trustops/prompt-config/configmap.yaml",
     });
 
     if (!parsed.success) {
@@ -26,7 +28,7 @@ export async function GET(request: Request): Promise<Response> {
       return NextResponse.json({ error: "Branch not found" }, { status: 404 });
     }
 
-    const commits = await listCommits(branch.sha, 30);
+    const commits = await listCommits(branch.sha, 30, parsed.data.path);
 
     return NextResponse.json({
       commits,

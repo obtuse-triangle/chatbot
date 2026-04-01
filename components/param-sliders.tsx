@@ -54,7 +54,7 @@ function SliderField({
         defaultValue={[value]}
         max={max}
         min={min}
-        onValueCommit={(nextValue) => {
+        onValueChange={(nextValue) => {
           onCommit(nextValue[0] ?? value)
         }}
         step={step}
