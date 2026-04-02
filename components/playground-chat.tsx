@@ -232,10 +232,10 @@ export function PlaygroundChat() {
         </div>
       </CardHeader>
 
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3">
         <div
           ref={scrollViewportRef}
-          className="flex-1 overflow-y-auto rounded-2xl border border-border/60 bg-background/35 p-4"
+          className="relative flex-1 overflow-y-auto rounded-2xl border border-border/60 bg-background/35 p-4"
           data-testid="chat-scroll-area"
         >
           <div className="space-y-3" data-testid="chat-message-list">
@@ -314,27 +314,24 @@ export function PlaygroundChat() {
               })
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={scrollToBottom}
+            data-testid="scroll-to-bottom"
+            className={cn(
+              "absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center",
+              "size-9 rounded-full border border-border/60 bg-background/90 text-muted-foreground shadow-md",
+              "transition-all duration-300 hover:bg-accent hover:text-accent-foreground",
+              isAtBottom ? "pointer-events-none opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+            )}
+          >
+            <ArrowDown className="size-4" />
+          </button>
         </div>
 
-        <div className="shrink-0 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              onClick={scrollToBottom}
-              data-testid="scroll-to-bottom"
-              className={cn(
-                "transition-all duration-300",
-                isAtBottom
-                  ? "opacity-0 pointer-events-none translate-y-2"
-                  : "opacity-100 translate-y-0",
-              )}
-            >
-              <ArrowDown className="size-4" />
-              Scroll to bottom
-            </Button>
-          </div>
+        <div className="shrink-0 space-y-2">
+          
 
           {errorMessage ? (
             <div
@@ -352,14 +349,14 @@ export function PlaygroundChat() {
           <form onSubmit={submitMessage}>
             <Textarea
               autoComplete="off"
-              className="min-h-24 bg-background/50"
+              className="min-h-20 bg-background/50"
               data-testid="chat-input"
               onChange={(event) => setInput(event.target.value)}
               placeholder="Ask the playground something..."
               value={input}
             />
 
-            <div className="mt-3 flex items-center justify-end gap-2">
+            <div className="mt-2 flex items-center justify-end gap-2">
               {isLoading ? (
                 <Button
                   variant="destructive"
