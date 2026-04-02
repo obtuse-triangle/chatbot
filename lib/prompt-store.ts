@@ -29,7 +29,7 @@ export type CommitDetails = {
 type CommitModalState = {
   open: boolean
   commitDetails: CommitDetails | null
-  confirmAction: (() => Promise<void> | void) | null
+  confirmAction: ((branch: string) => Promise<void> | void) | null
 }
 
 export type ActiveTab = "playground" | "ci-logs"
@@ -63,10 +63,10 @@ type PromptStoreState = {
   setTopK: (topK: number) => void
   commitModalOpen: boolean
   commitDetails: CommitDetails | null
-  confirmAction: (() => Promise<void> | void) | null
+  confirmAction: ((branch: string) => Promise<void> | void) | null
   setCommitModalOpen: (open: boolean) => void
   setCommitDetails: (details: CommitDetails | null) => void
-  setConfirmAction: (action: (() => Promise<void> | void) | null) => void
+  setConfirmAction: (action: ((branch: string) => Promise<void> | void) | null) => void
   resetCommitModal: () => void
   activeTab: ActiveTab
   setActiveTab: (tab: ActiveTab) => void
@@ -179,7 +179,7 @@ export function useStore<T>(selector: (state: PromptStoreState) => T): T {
   )
 
   const setConfirmAction = useCallback(
-    (action: (() => Promise<void> | void) | null) => {
+    (action: ((branch: string) => Promise<void> | void) | null) => {
       queryClient.setQueryData(COMMIT_MODAL_QUERY_KEY, (current: CommitModalState | undefined) => ({
         open: current?.open ?? false,
         commitDetails: current?.commitDetails ?? null,

@@ -100,7 +100,7 @@ export function CommitModal() {
     setErrorMessage(null)
 
     try {
-      await confirmAction()
+      await confirmAction(finalBranch)
       handleClose()
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to complete commit"

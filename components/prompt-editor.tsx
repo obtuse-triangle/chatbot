@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 
 import { CommitModal } from "@/components/commit-modal"
 import { ParamSliders } from "@/components/param-sliders"
@@ -8,12 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { PROMPT_STORAGE_KEY, usePromptHydration, useStore } from "@/lib/prompt-store"
 
-const DEFAULT_BRANCH = "main"
 const DEFAULT_COMMIT_MESSAGE = "feat: update prompt configuration"
 
 export function PromptEditor() {
   const [hydrated, setHydrated] = useState(false)
   const hydratePrompt = usePromptHydration()
+  const queryClient = useQueryClient()
   const {
     prompt,
     setPrompt,
@@ -25,6 +26,7 @@ export function PromptEditor() {
     setCommitModalOpen,
     setActiveTab,
     setCiPipelineState,
+    selectedBranch,
   } = useStore(
     (state) => ({
       prompt: state.prompt,
@@ -37,6 +39,7 @@ export function PromptEditor() {
       setCommitModalOpen: state.setCommitModalOpen,
       setActiveTab: state.setActiveTab,
       setCiPipelineState: state.setCiPipelineState,
+      selectedBranch: state.selectedBranch,
     })
   )
 
@@ -67,7 +70,7 @@ export function PromptEditor() {
     }
 
     setCommitDetails({
-      branchName: DEFAULT_BRANCH,
+      branchName: selectedBranch,
       commitMessage: DEFAULT_COMMIT_MESSAGE,
       actionLabel: "Commit & Run CI",
       changesSummary: "Prompt text and generation parameters will be committed together.",
@@ -78,13 +81,33 @@ export function PromptEditor() {
         topK,
       },
     })
-    setConfirmAction(async () => {
+    setConfirmAction(async (branch: string) => {
       setCiPipelineState({ phase: "committing", buildNumber: null, error: null })
+
+      // If the branch name is different from selectedBranch, we need to create it first
+      if (branch !== selectedBranch) {
+        const createResponse = await fetch("/api/git/branches", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: branch, base: selectedBranch }),
+        })
+        if (!createResponse.ok) {
+          const errBody = await createResponse.json().catch(() => ({ error: "Failed to create branch" }))
+          throw new Error(
+            typeof errBody === "object" && errBody !== null && "error" in errBody
+              ? String((errBody as { error: string }).error)
+              : "Failed to create branch"
+          )
+        }
+        // Invalidate branches query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["git-branches"] })
+      }
+
       const commitResponse = await fetch("/api/git/commit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          branch: DEFAULT_BRANCH,
+          branch,
           prompt,
           params: {
             temperature,
@@ -100,14 +123,12 @@ export function PromptEditor() {
         throw new Error("Failed to commit prompt changes")
       }
 
-      const commitPayload = (await commitResponse.json()) as { branch?: string }
-
       setCiPipelineState({ phase: "triggering", error: null })
 
       const triggerResponse = await fetch("/api/jenkins/trigger", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branch: commitPayload.branch ?? DEFAULT_BRANCH }),
+        body: JSON.stringify({ branch }),
       })
 
       if (!triggerResponse.ok) {
