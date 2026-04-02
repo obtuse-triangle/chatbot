@@ -1,10 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { validateBranchSuffix } from "@/lib/branch-validation"
 import { useStore } from "@/lib/prompt-store"
+import { useQuery } from "@tanstack/react-query"
 
 export function CommitModal() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -15,6 +25,7 @@ export function CommitModal() {
     confirmAction,
     setCommitModalOpen,
     resetCommitModal,
+    selectedBranch,
   } = useStore(
     (state) => ({
       commitModalOpen: state.commitModalOpen,
@@ -22,8 +33,42 @@ export function CommitModal() {
       confirmAction: state.confirmAction,
       setCommitModalOpen: state.setCommitModalOpen,
       resetCommitModal: state.resetCommitModal,
+      selectedBranch: state.selectedBranch,
     })
   )
+
+  const [targetBranch, setTargetBranch] = useState(selectedBranch)
+  const [isNewBranch, setIsNewBranch] = useState(false)
+  const [newBranchSuffix, setNewBranchSuffix] = useState("")
+  const [branchError, setBranchError] = useState<string | null>(null)
+
+  const branchesQuery = useQuery({
+    queryKey: ["git-branches"],
+    queryFn: () => fetch("/api/git/branches").then(r => r.json() as Promise<{ branches: Array<{ name: string }> }>),
+  })
+  const branches = branchesQuery.data?.branches ?? []
+
+  useEffect(() => {
+    setTargetBranch(selectedBranch)
+    setIsNewBranch(false)
+    setNewBranchSuffix("")
+    setBranchError(null)
+  }, [selectedBranch, commitModalOpen])
+
+  function handleBranchChange(value: string) {
+    if (value === "__create_new__") {
+      setIsNewBranch(true)
+      setNewBranchSuffix("")
+      setBranchError(null)
+    } else {
+      setIsNewBranch(false)
+      setNewBranchSuffix("")
+      setBranchError(null)
+      setTargetBranch(value)
+    }
+  }
+
+  const finalBranch = isNewBranch ? `prompt-config/${newBranchSuffix}` : targetBranch
 
   const handleClose = () => {
     if (isSubmitting) {
@@ -33,11 +78,22 @@ export function CommitModal() {
     resetCommitModal()
     setErrorMessage(null)
     setIsSubmitting(false)
+    setIsNewBranch(false)
+    setNewBranchSuffix("")
+    setBranchError(null)
   }
 
   const handleConfirm = async () => {
     if (!confirmAction) {
       return
+    }
+
+    if (isNewBranch) {
+      const validation = validateBranchSuffix(newBranchSuffix)
+      if (!validation.valid) {
+        setBranchError(validation.error)
+        return
+      }
     }
 
     setIsSubmitting(true)
@@ -76,7 +132,33 @@ export function CommitModal() {
           <div data-testid="commit-details" className="space-y-3 py-3 text-sm">
             <div className="space-y-1">
               <p className="font-medium">Branch</p>
-              <p className="text-muted-foreground">{commitDetails?.branchName ?? "main"}</p>
+              <Select value={isNewBranch ? "__create_new__" : targetBranch} onValueChange={handleBranchChange}>
+                <SelectTrigger className="w-full" data-testid="commit-branch-select">
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((b) => (
+                    <SelectItem key={b.name} value={b.name}>{b.name}</SelectItem>
+                  ))}
+                  <SelectItem value="__create_new__">+ Create new branch</SelectItem>
+                </SelectContent>
+              </Select>
+              {isNewBranch ? (
+                <div className="space-y-2 rounded-2xl border border-border/60 bg-background/35 p-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">prompt-config/</span>
+                    <Input
+                      data-testid="new-branch-suffix"
+                      placeholder="branch-name"
+                      value={newBranchSuffix}
+                      onChange={(e) => { setNewBranchSuffix(e.target.value); setBranchError(null) }}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleConfirm() }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Based on: {targetBranch}</p>
+                  {branchError ? <p className="text-sm text-destructive">{branchError}</p> : null}
+                </div>
+              ) : null}
             </div>
             <div className="space-y-1">
               <p className="font-medium">Commit message</p>
