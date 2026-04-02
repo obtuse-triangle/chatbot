@@ -29,7 +29,7 @@ export function TabViewer() {
       </div>
 
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden p-4">
-        <TabsContent className="h-full" data-testid="tab-content-playground" value="playground">
+        <TabsContent className="h-[calc(100vh-8rem)]" data-testid="tab-content-playground" value="playground">
           <PlaygroundChat />
         </TabsContent>
 
