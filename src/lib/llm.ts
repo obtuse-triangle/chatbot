@@ -21,6 +21,7 @@ export async function streamChat(messages: ChatMessage[], config: Partial<Stream
     },
     body: JSON.stringify({
       messages,
+      stream: true,
       ...config,
     }),
   });
