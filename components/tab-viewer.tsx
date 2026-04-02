@@ -13,7 +13,7 @@ export function TabViewer() {
 
   return (
     <Tabs
-      className="flex min-h-dvh flex-1 flex-col"
+      className="flex flex-1 flex-col min-h-0"
       onValueChange={(value: string) => setActiveTab(value === "ci-logs" ? "ci-logs" : "playground")}
       value={activeTab}
     >
@@ -29,7 +29,7 @@ export function TabViewer() {
       </div>
 
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden p-4">
-        <TabsContent className="h-[calc(100vh-8rem)]" data-testid="tab-content-playground" value="playground">
+        <TabsContent className="h-full min-h-0" data-testid="tab-content-playground" value="playground">
           <PlaygroundChat />
         </TabsContent>
 
