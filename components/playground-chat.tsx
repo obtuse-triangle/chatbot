@@ -320,7 +320,7 @@ export function PlaygroundChat() {
             onClick={scrollToBottom}
             data-testid="scroll-to-bottom"
             className={cn(
-              "absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center",
+              "sticky bottom-0 left-1/2 z-10 mb-4 flex -translate-x-1/2 items-center justify-center",
               "size-9 rounded-full border border-border/60 bg-background/90 text-muted-foreground shadow-md",
               "transition-all duration-300 hover:bg-accent hover:text-accent-foreground",
               isAtBottom ? "pointer-events-none opacity-0 translate-y-2" : "opacity-100 translate-y-0"
