@@ -93,8 +93,9 @@ export function BranchSelector() {
     setTemperature,
     setTopP,
     setTopK,
+    selectedBranch,
+    setSelectedBranch,
   } = useStore((state) => state)
-  const [branch, setBranch] = useState("")
   const [selectedCommit, setSelectedCommit] = useState<SelectedCommit | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<(() => Promise<void> | void) | null>(null)
@@ -109,19 +110,13 @@ export function BranchSelector() {
   })
 
   const commitsQuery = useQuery({
-    queryKey: ["git-commits", branch],
-    queryFn: () => fetchJson<{ commits: GitHubCommit[] }>(`/api/git/commits?branch=${encodeURIComponent(branch)}`),
-    enabled: branch.length > 0,
+    queryKey: ["git-commits", selectedBranch],
+    queryFn: () => fetchJson<{ commits: GitHubCommit[] }>(`/api/git/commits?branch=${encodeURIComponent(selectedBranch)}`),
+    enabled: selectedBranch.length > 0,
   })
 
   const branches = branchesQuery.data?.branches ?? []
   const commits = (commitsQuery.data?.commits ?? []).slice(0, 10)
-
-  useEffect(() => {
-    if (!branch && branches.length > 0) {
-      setBranch(branches[0].name)
-    }
-  }, [branch, branches])
 
   async function handleLoadCommit(commit: GitHubCommit) {
     const config = await loadCommitConfig(commit.sha)
@@ -165,7 +160,7 @@ export function BranchSelector() {
         <label className="text-xs uppercase tracking-[0.22em] text-muted-foreground" htmlFor="branch-select">
           Branch
         </label>
-        <Select value={branch} onValueChange={setBranch}>
+        <Select value={selectedBranch} onValueChange={setSelectedBranch}>
           <SelectTrigger data-testid="branch-dropdown" id="branch-select" className="w-full">
             <SelectValue placeholder={branchesQuery.isLoading ? "Loading branches..." : "Select a branch"} />
           </SelectTrigger>
@@ -247,7 +242,7 @@ export function BranchSelector() {
 
           <div className="space-y-2 text-sm">
             <p>
-              <span className="font-medium">Branch:</span> {branch}
+              <span className="font-medium">Branch:</span> {selectedBranch}
             </p>
             <p>
               <span className="font-medium">Commit:</span> {selectedCommit?.commit.message ?? ""}
