@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
+import { isValidBranchName } from "../../../../lib/branch-validation"
 import { createBranch, listBranches } from "../../../../src/lib/github"
 
 export async function GET(): Promise<Response> {
@@ -14,7 +15,9 @@ export async function GET(): Promise<Response> {
 }
 
 const createBranchSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).refine(isValidBranchName, {
+    message: "Branch name must be 'main' or start with 'prompt-config/'",
+  }),
   base: z.string().min(1),
 })
 

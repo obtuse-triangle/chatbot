@@ -9,6 +9,7 @@ const PARAMS_QUERY_KEY = ["prompt-editor", "generation-params"] as const
 const COMMIT_MODAL_QUERY_KEY = ["commit-modal"] as const
 const ACTIVE_TAB_QUERY_KEY = ["app", "active-tab"] as const
 const CI_PIPELINE_QUERY_KEY = ["ci-pipeline"] as const
+const SELECTED_BRANCH_QUERY_KEY = ["prompt-editor", "selected-branch"] as const
 
 export type PromptParameters = {
   temperature: number
@@ -72,6 +73,8 @@ type PromptStoreState = {
   ciPipeline: CiPipelineState
   setCiPipelineState: (patch: Partial<CiPipelineState>) => void
   resetCiPipeline: () => void
+  selectedBranch: string
+  setSelectedBranch: (branch: string) => void
 }
 
 export function useStore<T>(selector: (state: PromptStoreState) => T): T {
@@ -104,6 +107,12 @@ export function useStore<T>(selector: (state: PromptStoreState) => T): T {
     queryKey: CI_PIPELINE_QUERY_KEY,
     queryFn: async () => ({ phase: "idle", buildNumber: null, error: null } satisfies CiPipelineState),
     initialData: { phase: "idle", buildNumber: null, error: null } satisfies CiPipelineState,
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+  const { data: selectedBranch = "main" } = useQuery({
+    queryKey: SELECTED_BRANCH_QUERY_KEY,
+    queryFn: async () => "main",
+    initialData: "main",
     staleTime: Number.POSITIVE_INFINITY,
   })
 
@@ -214,6 +223,13 @@ export function useStore<T>(selector: (state: PromptStoreState) => T): T {
     } satisfies CiPipelineState)
   }, [queryClient])
 
+  const setSelectedBranch = useCallback(
+    (branch: string) => {
+      queryClient.setQueryData(SELECTED_BRANCH_QUERY_KEY, branch)
+    },
+    [queryClient]
+  )
+
   return selector({
     prompt,
     systemPrompt: prompt,
@@ -237,6 +253,8 @@ export function useStore<T>(selector: (state: PromptStoreState) => T): T {
     ciPipeline,
     setCiPipelineState,
     resetCiPipeline,
+    selectedBranch,
+    setSelectedBranch,
   })
 }
 

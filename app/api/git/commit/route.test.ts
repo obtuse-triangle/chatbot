@@ -40,7 +40,7 @@ describe("POST /api/git/commit", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          branch: "feature/test",
+          branch: "main",
           prompt: "Updated prompt",
           params: { temperature: 0.7, top_p: 0.8 },
           message: "Update prompt config",
@@ -50,12 +50,12 @@ describe("POST /api/git/commit", () => {
 
     const payload = await response.json();
 
-    expect(githubMocks.getFileMock).toHaveBeenCalledWith("apps/trustops/prompt-config/configmap.yaml", "feature/test");
+    expect(githubMocks.getFileMock).toHaveBeenCalledWith("apps/trustops/prompt-config/configmap.yaml", "main");
     expect(githubMocks.commitFileMock).toHaveBeenCalledWith(
       "apps/trustops/prompt-config/configmap.yaml",
       expect.any(String),
       "Update prompt config",
-      "feature/test",
+      "main",
       "abc123",
     );
     expect(parsePromptConfig(githubMocks.commitFileMock.mock.calls[0]?.[1] ?? "")).toEqual({
@@ -69,7 +69,7 @@ describe("POST /api/git/commit", () => {
       prompt_version: "v1.0.0",
     });
     expect(response.status).toBe(201);
-    expect(payload).toEqual({ sha: "commit-sha", branch: "feature/test" });
+    expect(payload).toEqual({ sha: "commit-sha", branch: "main" });
   });
 
   it("returns validation errors for missing fields", async () => {
@@ -77,7 +77,7 @@ describe("POST /api/git/commit", () => {
       new Request("http://localhost/api/git/commit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branch: "feature/test" }),
+        body: JSON.stringify({ branch: "main" }),
       }),
     );
 
@@ -108,7 +108,7 @@ describe("POST /api/git/commit", () => {
       new Request("http://localhost/api/git/commit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branch: "feature/test", prompt: "Updated prompt", params: {} }),
+        body: JSON.stringify({ branch: "main", prompt: "Updated prompt", params: {} }),
       }),
     );
 
@@ -123,7 +123,7 @@ describe("POST /api/git/commit", () => {
       new Request("http://localhost/api/git/commit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branch: "feature/test", prompt: "Updated prompt", params: {} }),
+        body: JSON.stringify({ branch: "main", prompt: "Updated prompt", params: {} }),
       }),
     );
 
@@ -153,7 +153,7 @@ describe("POST /api/git/commit", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          branch: "feature/test",
+          branch: "main",
           prompt: "New prompt",
           params: { top_k: 99 },
         }),
@@ -172,5 +172,95 @@ describe("POST /api/git/commit", () => {
       canary_weight: 5,
       prompt_version: "v1.0.0",
     });
+  });
+
+  it("returns 400 for invalid branch name 'feature/test'", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/git/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branch: "feature/test",
+          prompt: "Updated prompt",
+          params: {},
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(githubMocks.getFileMock).not.toHaveBeenCalled();
+    expect(githubMocks.commitFileMock).not.toHaveBeenCalled();
+  });
+
+  it("passes validation for 'prompt-config/experiment'", async () => {
+    const existingConfig = {
+      system_prompt: "You are helpful",
+      temperature: 0.2,
+      top_p: 0.9,
+      top_k: 40,
+      prompt_v1: "alpha",
+      prompt_v2: "beta",
+      canary_weight: 25,
+    };
+
+    githubMocks.getFileMock.mockResolvedValueOnce({
+      content: serializePromptConfig(existingConfig),
+      sha: "abc123",
+    });
+    githubMocks.commitFileMock.mockResolvedValueOnce({ commit: { sha: "commit-sha" } });
+
+    const response = await POST(
+      new Request("http://localhost/api/git/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branch: "prompt-config/experiment",
+          prompt: "Updated prompt",
+          params: { temperature: 0.7 },
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(githubMocks.getFileMock).toHaveBeenCalledWith(
+      "apps/trustops/prompt-config/configmap.yaml",
+      "prompt-config/experiment",
+    );
+  });
+
+  it("passes validation for 'main' (regression guard)", async () => {
+    const existingConfig = {
+      system_prompt: "You are helpful",
+      temperature: 0.2,
+      top_p: 0.9,
+      top_k: 40,
+      prompt_v1: "alpha",
+      prompt_v2: "beta",
+      canary_weight: 25,
+    };
+
+    githubMocks.getFileMock.mockResolvedValueOnce({
+      content: serializePromptConfig(existingConfig),
+      sha: "abc123",
+    });
+    githubMocks.commitFileMock.mockResolvedValueOnce({ commit: { sha: "commit-sha" } });
+
+    const response = await POST(
+      new Request("http://localhost/api/git/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branch: "main",
+          prompt: "Updated prompt",
+          params: {},
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(githubMocks.getFileMock).toHaveBeenCalledWith(
+      "apps/trustops/prompt-config/configmap.yaml",
+      "main",
+    );
   });
 });

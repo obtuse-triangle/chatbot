@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { isValidBranchName } from "../../../../lib/branch-validation";
 import { parsePromptConfig, serializePromptConfig } from "../../../../src/lib/config";
 import { commitFile, getFile } from "../../../../src/lib/github";
 import { generateNextVersion } from "../../../../src/lib/version";
 
 const commitRouteSchema = z.object({
-  branch: z.string().min(1),
+  branch: z.string().min(1).refine(isValidBranchName, {
+    message: "Branch name must be 'main' or start with 'prompt-config/'",
+  }),
   prompt: z.string().min(1),
   params: z
     .object({
