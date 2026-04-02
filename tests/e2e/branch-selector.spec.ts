@@ -68,3 +68,22 @@ test("branch dropdown, commit list, modal, and load update editor", async ({ pag
   await expect(page.getByTestId("current-top-p")).toHaveText("Top P: 0.8")
   await expect(page.getByTestId("current-top-k")).toHaveText("Top K: 35")
 })
+
+test("selecting branch updates global store", async ({ page }) => {
+  await page.route("**/api/git/branches**", async (route) => {
+    await route.fulfill({
+      json: { branches: [{ name: "main", sha: "main-sha" }, { name: "prompt-config/test", sha: "test-sha" }] },
+    })
+  })
+
+  await page.route("**/api/git/commits**", async (route) => {
+    await route.fulfill({ json: { commits: [] } })
+  })
+
+  await page.goto("/")
+  await expect(page.getByTestId("branch-dropdown")).toBeVisible()
+  await page.getByTestId("branch-dropdown").click()
+  await page.getByText("prompt-config/test").click()
+
+  await expect(page.getByTestId("branch-dropdown")).toContainText("prompt-config/test")
+})
