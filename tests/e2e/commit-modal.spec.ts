@@ -207,6 +207,52 @@ test("successful new branch creation and commit flow", async ({ page }) => {
   await expect(page.getByTestId("commit-dialog")).toHaveCount(0)
 })
 
+test("branch list refreshes after new branch creation", async ({ page }) => {
+  let getBranchesCalls = 0
+  const initialBranches = [{ name: "main", sha: "sha" }]
+  const updatedBranches = [{ name: "main", sha: "sha" }, { name: "prompt-config/new-branch", sha: "new-sha" }]
+
+  await page.route("**/api/git/branches**", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({ status: 201, json: { name: "prompt-config/new-branch", sha: "new-sha" } })
+    } else {
+      getBranchesCalls += 1
+      // First call returns initial, subsequent calls return updated list (simulates invalidation)
+      const branches = getBranchesCalls <= 1 ? initialBranches : updatedBranches
+      await route.fulfill({ json: { branches } })
+    }
+  })
+
+  await page.route("**/api/git/commit", async (route) => {
+    await route.fulfill({ status: 201, json: { sha: "commit-sha", branch: "prompt-config/new-branch" } })
+  })
+
+  await page.route("**/api/jenkins/trigger", async (route) => {
+    await route.fulfill({ status: 200, json: { buildNumber: 42, status: "running" } })
+  })
+
+  await page.route("**/api/jenkins/logs**", async (route) => {
+    await route.fulfill({ status: 200, json: { logs: "", status: "SUCCESS", buildNumber: 42 } })
+  })
+
+  await page.route("**/api/metrics**", async (route) => {
+    await route.fulfill({ status: 200, json: { faithfulness: 0.88, relevance: 0.91, commitId: "abc1234" } })
+  })
+
+  await page.goto("/")
+  await page.getByTestId("prompt-textarea").fill("Test prompt")
+  await page.getByTestId("commit-run-ci-button").click()
+
+  await page.getByTestId("commit-branch-select").click()
+  await page.getByText("+ Create new branch").click()
+  await page.getByTestId("new-branch-suffix").fill("new-branch")
+  await page.getByTestId("confirm-action-button").click()
+
+  // After commit, the branch list should be refreshed (invalidated + refetched)
+  await expect(page.getByTestId("commit-dialog")).toHaveCount(0)
+  await expect.poll(() => getBranchesCalls).toBeGreaterThanOrEqual(2)
+})
+
 test("duplicate branch name shows error in modal", async ({ page }) => {
   await page.route("**/api/git/branches**", async (route) => {
     if (route.request().method() === "POST") {
